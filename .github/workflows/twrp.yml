@@ -1,4 +1,16 @@
-- name: Recovery Compilation
+name: Recovery Builder
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Recovery Compilation
         uses: TeamWinBP/Action-Recovery-Builder@main
         with:
           recipe: 'twrp'
