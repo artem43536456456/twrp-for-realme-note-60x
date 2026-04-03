@@ -1,31 +1,31 @@
-name: TWRP Builder Final
+name: Extract Boot with Magiskboot
 
 on:
   workflow_dispatch:
 
 jobs:
-  build:
+  extract:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare System
+      - name: Setup Tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y git curl bc build-essential zip unzip libstdc++6 python3
+          sudo apt update && sudo apt install -y cpio
+          # Скачиваем magiskboot под x86_64
+          curl -L https://github.com/Magisk-Modules-Repo/Magiskboot_Builder/raw/main/bin/x86_64/magiskboot -o magiskboot
+          chmod +x magiskboot
 
-      - name: Sync Test
+      - name: Unpack Boot
         run: |
-          mkdir -p ~/bin
-          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
-          chmod a+x ~/bin/repo
-          
-          git config --global user.email "bot@example.com"
-          git config --global user.name "Builder"
-          
-          echo "Connecting to TWRP source..."
-          # Убрал параметр -b (ветку), теперь он сам найдет нужную
-          python3 ~/bin/repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git --depth=1
-          echo "Final check..."
-          python3 ~/bin/repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+          # Распаковываем твой 64мб файл
+          ./magiskboot unpack boot.img
+          # Собираем всё в один архив для скачивания
+          tar -cvzf boot_data.tar.gz kernel ramdisk.cpio config dtb 2>/dev/null || tar -cvzf boot_data.tar.gz *
+
+      - name: Upload Result
+        uses: actions/upload-artifact@v4
+        with:
+          name: extracted-files
+          path: boot_data.tar.gz
