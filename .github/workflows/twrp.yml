@@ -13,7 +13,6 @@ jobs:
       - name: Prepare System
         run: |
           sudo apt-get update
-          # Оставляем только те пакеты, которые 100% существуют во всех Ubuntu
           sudo apt-get install -y git curl bc build-essential zip unzip libstdc++6 python3
 
       - name: Sync Test
@@ -26,6 +25,6 @@ jobs:
           git config --global user.name "Builder"
           
           echo "Connecting to TWRP source..."
-          # Запускаем через python3, так как новые системы это любят
-          python3 ~/bin/repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git -b twrp-12.1 --depth=1
-          echo "If you see this, we finally WON the connection battle!"
+          # Сменил ветку на twrp-11, она там точно есть
+          python3 ~/bin/repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git -b twrp-11 --depth=1
+          echo "If you see this, the connection is 100% perfect!"
