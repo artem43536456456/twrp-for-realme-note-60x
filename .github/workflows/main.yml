@@ -1,0 +1,22 @@
+name: Recovery Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Recovery Build Action
+        uses: hodis/twrp-builder@main
+        with:
+          library_url: https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git
+          library_branch: twrp-12.1
+          device_url: ${{ github.server_url }}/${{ github.repository }}
+          device_branch: main
+          device_path: device/realme/RMX3938
+          device_name: RMX3938
+          build_target: recovery
