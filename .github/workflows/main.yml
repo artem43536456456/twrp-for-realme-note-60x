@@ -50,8 +50,9 @@ jobs:
 
     - name: Prepare Artifacts
       run: |
-        cp $(find /home/runner/twrp/out/target/product/ -name "recovery.img") $GITHUB_WORKSPACE/recovery.img
-        cp $(find /home/runner/twrp/out/target/product/ -name "*.zip") $GITHUB_WORKSPACE/ || true
+        cd /home/runner/twrp
+        find out/target/product/ -name "recovery.img" -exec cp {} $GITHUB_WORKSPACE/recovery.img \;
+        find out/target/product/ -name "*.zip" -exec cp {} $GITHUB_WORKSPACE/ \; || true
 
     - name: Upload Result
       uses: actions/upload-artifact@v4
