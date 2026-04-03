@@ -1,18 +1,16 @@
-- name: Patch Init Boot
-        run: |
-          wget https://github.com/artem43536456456/twrp-for-realme-note-60x/raw/main/magiskboot
-          chmod a+x magiskboot
-          ./magiskboot unpack stock_init_boot.img
-          # Исправленный путь к собранному ramdisk
-          cp ~/twrp/out/target/product/RMX3938/recovery.img recovery.img
-          ./magiskboot unpack recovery.img
-          mv ramdisk.cpio ramdisk_new.cpio
-          ./magiskboot unpack stock_init_boot.img
-          mv ramdisk_new.cpio ramdisk.cpio
-          ./magiskboot repack stock_init_boot.img patched_init_boot.img
+    - name: Patch Init Boot
+      run: |
+        wget https://github.com/artem43536456456/twrp-for-realme-note-60x/raw/main/magiskboot
+        chmod a+x magiskboot
+        cp /home/runner/twrp/out/target/product/RMX3938/recovery.img recovery.img
+        ./magiskboot unpack recovery.img
+        mv ramdisk.cpio ramdisk_new.cpio
+        ./magiskboot unpack stock_init_boot.img
+        mv ramdisk_new.cpio ramdisk.cpio 
+        ./magiskboot repack stock_init_boot.img patched_init_boot.img
 
-      - name: Upload
-        uses: actions/upload-artifact@v4
-        with:
-          name: TWRP-Final
-          path: patched_init_boot.img
+    - name: Upload Result
+      uses: actions/upload-artifact@v4
+      with:
+        name: TWRP-Final
+        path: patched_init_boot.img
