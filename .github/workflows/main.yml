@@ -3,10 +3,19 @@ on:
   workflow_dispatch:
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc build-essential zip curl libc6-dev libncurses5-dev x11proto-core-dev libx11-dev libgl1-mesa-dev g++-multilib libxml2-utils xsltproc unzip fontconfig
+          mkdir -p ~/bin
+          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+          chmod a+x ~/bin/repo
+          sudo ln -sf ~/bin/repo /usr/bin/repo
 
       - name: Sync TWRP
         run: |
@@ -28,7 +37,7 @@ jobs:
           wget https://github.com/artem43536456456/twrp-for-realme-note-60x/raw/main/magiskboot
           chmod a+x magiskboot
           ./magiskboot unpack stock_init_boot.img
-          cp /home/runner/twrp/out/target/product/RMX3938/ramdisk.img ramdisk.cpio
+          cp ~/twrp/out/target/product/RMX3938/ramdisk.img ramdisk.cpio
           ./magiskboot repack stock_init_boot.img patched_init_boot.img
 
       - name: Upload
