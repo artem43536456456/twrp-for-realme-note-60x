@@ -1,4 +1,4 @@
-- name: Patch Init Boot with TWRP
+- name: Patch Init Boot
       run: |
         wget https://github.com/artem43536456456/twrp-for-realme-note-60x/raw/main/magiskboot
         chmod a+x magiskboot
@@ -10,5 +10,5 @@
     - name: Upload Result
       uses: actions/upload-artifact@v4
       with:
-        name: TWRP-Android15-INIT-BOOT
+        name: TWRP-Android15
         path: patched_init_boot.img
