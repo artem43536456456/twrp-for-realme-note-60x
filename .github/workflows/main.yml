@@ -1,16 +1,50 @@
-    - name: Patch Init Boot
-      run: |
-        wget https://github.com/artem43536456456/twrp-for-realme-note-60x/raw/main/magiskboot
-        chmod a+x magiskboot
-        cp /home/runner/twrp/out/target/product/RMX3938/recovery.img recovery.img
-        ./magiskboot unpack recovery.img
-        mv ramdisk.cpio ramdisk_new.cpio
-        ./magiskboot unpack stock_init_boot.img
-        mv ramdisk_new.cpio ramdisk.cpio 
-        ./magiskboot repack stock_init_boot.img patched_init_boot.img
+name: Recovery Build
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Upload Result
-      uses: actions/upload-artifact@v4
-      with:
-        name: TWRP-Final
-        path: patched_init_boot.img
+      - name: Install Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc build-essential zip curl libc6-dev libncurses5-dev x11proto-core-dev libx11-dev libgl1-mesa-dev g++-multilib libxml2-utils xsltproc unzip fontconfig
+          mkdir -p ~/bin
+          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+          chmod a+x ~/bin/repo
+          sudo ln -sf ~/bin/repo /usr/bin/repo
+
+      - name: Sync TWRP
+        run: |
+          mkdir ~/twrp && cd ~/twrp
+          repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
+          repo sync -j$(nproc --all)
+          git clone https://github.com/artem43536456456/twrp-for-realme-note-60x device/realme/RMX3938
+
+      - name: Build
+        run: |
+          cd ~/twrp
+          export ALLOW_MISSING_DEPENDENCIES=true
+          source build/envsetup.sh
+          lunch twrp_RMX3938-eng
+          make recoveryimage -j$(nproc --all)
+
+      - name: Patch Init Boot
+        run: |
+          wget https://github.com/artem43536456456/twrp-for-realme-note-60x/raw/main/magiskboot
+          chmod a+x magiskboot
+          cp /home/runner/twrp/out/target/product/RMX3938/recovery.img recovery.img
+          ./magiskboot unpack recovery.img
+          mv ramdisk.cpio ramdisk_new.cpio
+          ./magiskboot unpack stock_init_boot.img
+          mv ramdisk_new.cpio ramdisk.cpio
+          ./magiskboot repack stock_init_boot.img patched_init_boot.img
+
+      - name: Upload Result
+        uses: actions/upload-artifact@v4
+        with:
+          name: TWRP-Final
+          path: patched_init_boot.img
