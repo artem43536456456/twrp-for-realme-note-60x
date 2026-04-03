@@ -30,24 +30,28 @@ jobs:
 
     - name: Sync TWRP Sources
       run: |
-        mkdir ~/twrp
-        cd ~/twrp
-        repo init --u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
-        repo sync -j$(nproc)
+        mkdir /home/runner/twrp
+        cd /home/runner/twrp
+        repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
+        repo sync -j$(nproc --all) --force-sync
 
     - name: Setup Device Tree
       run: |
-        cd ~/twrp
+        cd /home/runner/twrp
         git clone https://github.com/artem43536456456/twrp-for-realme-note-60x device/realme/RMX3938
 
     - name: Build
       run: |
-        cd ~/twrp
+        cd /home/runner/twrp
         export ALLOW_MISSING_DEPENDENCIES=true
         source build/envsetup.sh
         lunch twrp_RMX3938-eng
-        make recoveryimage -j$(nproc)
+        make recoveryimage -j$(nproc --all)
 
     - name: Upload Result
       uses: actions/upload-artifact@v4
       with:
+        name: TWRP-Realme-Note-60x
+        path: |
+          /home/runner/twrp/out/target/product/*/recovery.img
+          /home/runner/twrp/out/target/product/*/*.zip
