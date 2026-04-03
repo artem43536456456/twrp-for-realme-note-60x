@@ -1,4 +1,4 @@
-name: Recovery Builder (Manual)
+name: TWRP Builder Manual
 
 on:
   workflow_dispatch:
@@ -10,23 +10,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Dependencies
+      - name: System Update
         run: |
           sudo apt update
           sudo apt install -y git-core gnupg flex bison gperf build-essential zip curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip bc
 
-      - name: Get Repo Tool
+      - name: Install Repo Tool
         run: |
           mkdir -p ~/bin
           curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
           chmod a+x ~/bin/repo
           sudo ln -sf ~/bin/repo /usr/bin/repo
 
-      - name: Initialize and Sync
+      - name: Test Connection
         run: |
-          mkdir workspace && cd workspace
-          git config --global user.email "you@example.com"
-          git config --global user.name "YourName"
+          git config --global user.email "tester@example.com"
+          git config --global user.name "Tester"
+          echo "Checking manifest..."
           repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git -b twrp-12.1 --depth=1
-          repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
-          echo "Sync completed successfully!"
+          echo "Connection successful! We can build now."
