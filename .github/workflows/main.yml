@@ -36,14 +36,15 @@ jobs:
         run: |
           wget https://github.com/artem43536456456/twrp-for-realme-note-60x/raw/main/magiskboot
           chmod a+x magiskboot
-          cp /home/runner/twrp/out/target/product/RMX3938/recovery.img recovery.img
+          RECOVERY_PATH=$(find /home/runner/twrp/out -name "recovery.img" | head -n 1)
+          cp "$RECOVERY_PATH" recovery.img
           ./magiskboot unpack recovery.img
           mv ramdisk.cpio ramdisk_new.cpio
           ./magiskboot unpack stock_init_boot.img
           mv ramdisk_new.cpio ramdisk.cpio
           ./magiskboot repack stock_init_boot.img patched_init_boot.img
 
-      - name: Upload Result
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: TWRP-Final
