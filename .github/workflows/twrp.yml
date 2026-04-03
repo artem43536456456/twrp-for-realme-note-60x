@@ -1,32 +1,16 @@
-name: Extract Boot with Magiskboot
-
-on:
-  workflow_dispatch:
-
-jobs:
-  extract:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Tools
+- name: Unpack Boot
         run: |
-          sudo apt update && sudo apt install -y cpio
-          # Даем права на запуск твоему magiskboot
           chmod +x magiskboot
-
-      - name: Unpack Boot
-        run: |
-          # Пробуем распаковать
           ./magiskboot unpack boot.img
-          # Проверяем, что получилось
-          ls -l
-          # Собираем результат в архив
-          tar -cvzf boot_extracted.tar.gz kernel ramdisk.cpio dtb 2>/dev/null || tar -cvzf boot_extracted.tar.gz *
+          # Посмотрим, как именно называются файлы
+          ls -R
+          # Пакуем абсолютно всё содержимое папки, чтобы ничего не упустить
+          tar -cvzf boot_extracted.tar.gz *
 
       - name: Upload Result
         uses: actions/upload-artifact@v4
         with:
-          name: boot-contents
+          name: boot-contents-final
           path: boot_extracted.tar.gz
+          # Не останавливать билд, если что-то не так с загрузкой
+          if-no-files-found: warn
