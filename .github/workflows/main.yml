@@ -5,18 +5,17 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Recovery Build Action
-        uses: hodis/twrp-builder@main
+      - name: Build TWRP
+        uses: Pofice/TWRP-Recovery-Build-Action@main
         with:
-          library_url: https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git
-          library_branch: twrp-12.1
-          device_url: ${{ github.server_url }}/${{ github.repository }}
-          device_branch: main
-          device_path: device/realme/RMX3938
-          device_name: RMX3938
-          build_target: recovery
+          MANIFEST_URL: https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git
+          MANIFEST_BRANCH: twrp-12.1
+          DEVICE_PATH: device/realme/RMX3938
+          DEVICE_NAME: RMX3938
+          MAKEFILE_NAME: twrp_RMX3938
+          BUILD_TARGET: recovery
