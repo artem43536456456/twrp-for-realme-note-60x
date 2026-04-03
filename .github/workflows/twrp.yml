@@ -11,7 +11,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Recovery Compilation
-        uses: burnt-orange/Action-Recovery-Builder@main
+        uses: sebaubuntu-remote-builds/Recovery-Builder@main
         with:
           recipe: 'twrp'
           repo: 'https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git'
