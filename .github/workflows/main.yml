@@ -10,26 +10,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Dependencies
+      - name: Install Repo
         run: |
-          sudo apt-get update
-          sudo apt-get install -y bc build-essential zip curl libc6-dev libncurses5-dev libssl-dev x11proto-core-dev libx11-dev libgl1-mesa-dev g++-multilib python3 python2
-          sudo curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo
-          sudo chmod a+x /usr/local/bin/repo
+          mkdir -p ~/bin
+          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+          chmod a+x ~/bin/repo
+          echo "PATH=$HOME/bin:$PATH" >> $GITHUB_ENV
 
       - name: Sync TWRP Sources
         run: |
+          export PATH=$HOME/bin:$PATH
           mkdir ~/twrp && cd ~/twrp
           repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
           repo sync -j$(nproc --all) --force-sync
 
       - name: Setup Device Tree
         run: |
+          # Создаем правильную структуру папок для Realme
           mkdir -p ~/twrp/device/realme/RMX3938
+          # Копируем твои файлы из репозитория в эту папку
           cp -r $GITHUB_WORKSPACE/* ~/twrp/device/realme/RMX3938/
 
       - name: Build
         run: |
+          export PATH=$HOME/bin:$PATH
           cd ~/twrp
           export ALLOW_MISSING_DEPENDENCIES=true
           source build/envsetup.sh
