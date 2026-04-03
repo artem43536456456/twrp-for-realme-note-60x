@@ -41,9 +41,9 @@ jobs:
           mka recoveryimage -j$(nproc --all)
 
       - name: Upload Result
-        uses: actions/upload-artifact@v4
-        with:
-          name: TWRP-Recovery
-          path: |
-            ~/twrp/out/target/product/*/recovery.img
-            ~/twrp/out/target/product/*/*.zip
+      uses: actions/upload-artifact@v4
+      with:
+        name: TWRP-Realme-Note-60x
+        path: |
+          out/target/product/*/recovery.img
+          out/target/product/*/*.zip
