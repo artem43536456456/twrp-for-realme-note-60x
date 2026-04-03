@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Recovery Compilation
         uses: burnt-orange/Action-Recovery-Builder@main
@@ -18,4 +18,4 @@ jobs:
           branch: 'twrp-12.1'
           device: 'ussi_arm64'
           vendor: 'unisoc'
-          path: 'device/unisoc/ussi_arm64'
+          path: '.'
