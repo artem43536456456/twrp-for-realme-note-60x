@@ -12,21 +12,20 @@ jobs:
 
       - name: Prepare System
         run: |
-          sudo dpkg --add-architecture i386
           sudo apt-get update
-          # Мы убрали lib32ncurses5-dev и заменили на то, что точно есть
-          sudo apt-get install -y git curl bc build-essential zip unzip libncurses5 libncurses5:i386 libstdc++6:i386
+          # Оставляем только те пакеты, которые 100% существуют во всех Ubuntu
+          sudo apt-get install -y git curl bc build-essential zip unzip libstdc++6 python3
 
       - name: Sync Test
         run: |
-          git config --global user.email "bot@example.com"
-          git config --global user.name "Builder"
-          # Ставим инструмент repo вручную, чтобы не зависеть от пакетов
           mkdir -p ~/bin
           curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
           chmod a+x ~/bin/repo
-          export PATH=$PATH:~/bin
+          
+          git config --global user.email "bot@example.com"
+          git config --global user.name "Builder"
           
           echo "Connecting to TWRP source..."
-          ~/bin/repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git -b twrp-12.1 --depth=1
-          echo "Success! System is ready for full build."
+          # Запускаем через python3, так как новые системы это любят
+          python3 ~/bin/repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git -b twrp-12.1 --depth=1
+          echo "If you see this, we finally WON the connection battle!"
