@@ -1,4 +1,4 @@
-name: Manual Recovery Build
+name: Recovery Build
 
 on:
   workflow_dispatch:
@@ -7,41 +7,47 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Install Repo
-        run: |
-          mkdir -p ~/bin
-          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
-          chmod a+x ~/bin/repo
-          echo "PATH=$HOME/bin:$PATH" >> $GITHUB_ENV
+    - name: Cleanup
+      run: |
+        docker rmi $(docker images -q)
+        sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /opt/ghc
+        sudo apt-get clean
 
-      - name: Sync TWRP Sources
-        run: |
-          export PATH=$HOME/bin:$PATH
-          mkdir ~/twrp && cd ~/twrp
-          repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
-          repo sync -j$(nproc --all) --force-sync
+    - name: Set up Environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y bc build-essential zip curl libc6-dev libncurses5-dev libssl-dev x11proto-core-dev libx11-dev libgl1-mesa-dev g++-multilib mingw-w64-i686-dev libxml2-utils xsltproc gperf
 
-      - name: Setup Device Tree
-        run: |
-          # Создаем правильную структуру папок для Realme
-          mkdir -p ~/twrp/device/realme/RMX3938
-          # Копируем твои файлы из репозитория в эту папку
-          cp -r $GITHUB_WORKSPACE/* ~/twrp/device/realme/RMX3938/
+    - name: Install Repo
+      run: |
+        mkdir ~/bin
+        curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+        chmod a+x ~/bin/repo
+        sudo ln -sf ~/bin/repo /usr/bin/repo
 
-      - name: Build
-        run: |
-          export PATH=$HOME/bin:$PATH
-          cd ~/twrp
-          export ALLOW_MISSING_DEPENDENCIES=true
-          source build/envsetup.sh
-          lunch twrp_RMX3938-eng
-          mka recoveryimage -j$(nproc --all)
+    - name: Sync TWRP Sources
+      run: |
+        mkdir ~/twrp
+        cd ~/twrp
+        repo init --u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
+        repo sync -j$(nproc)
 
-   - name: Upload Result
+    - name: Setup Device Tree
+      run: |
+        cd ~/twrp
+        git clone https://github.com/artem43536456456/twrp-for-realme-note-60x device/realme/RMX3938
+
+    - name: Build
+      run: |
+        cd ~/twrp
+        export ALLOW_MISSING_DEPENDENCIES=true
+        source build/envsetup.sh
+        lunch twrp_RMX3938-eng
+        make recoveryimage -j$(nproc)
+
+    - name: Upload Result
       uses: actions/upload-artifact@v4
       with:
-        name: TWRP-Realme-Note-60x
-        path: twrp/out/target/product/*/
