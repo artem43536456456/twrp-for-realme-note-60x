@@ -13,22 +13,17 @@ jobs:
       - name: Setup Tools
         run: |
           sudo apt update && sudo apt install -y cpio
-          # Даем права на запуск твоему magiskboot
           chmod +x magiskboot
 
-- name: Unpack Boot
+      - name: Unpack Boot
         run: |
-          chmod +x magiskboot
           ./magiskboot unpack boot.img
-          # Посмотрим, как именно называются файлы
           ls -R
-          # Пакуем абсолютно всё содержимое папки, чтобы ничего не упустить
           tar -cvzf boot_extracted.tar.gz *
 
-- name: Upload Result
+      - name: Upload Result
         uses: actions/upload-artifact@v4
         with:
           name: boot-contents-final
           path: boot_extracted.tar.gz
-          # Не останавливать билд, если что-то не так с загрузкой
           if-no-files-found: warn
