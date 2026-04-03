@@ -5,13 +5,13 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Recovery Compilation
-        uses: TeamWinBP/Action-Recovery-Builder@main
+      - name: Build Recovery
+        uses: SebaUbuntu/Action-Recovery-Builder@main
         with:
           recipe: 'twrp'
           repo: 'https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git'
