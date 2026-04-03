@@ -1,13 +1,38 @@
-- name: Patch with Magiskboot
-      run: |
-        wget https://github.com/artem43536456456/twrp-for-realme-note-60x/raw/main/magiskboot
-        chmod a+x magiskboot
-        ./magiskboot unpack stock_init_boot.img
-        cp /home/runner/twrp/out/target/product/RMX3938/ramdisk.img ramdisk.cpio
-        ./magiskboot repack stock_init_boot.img patched_init_boot.img
+name: Recovery Build
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Upload TWRP
-      uses: actions/upload-artifact@v4
-      with:
-        name: TWRP-Realme-Note60x
-        path: patched_init_boot.img
+      - name: Sync TWRP
+        run: |
+          mkdir ~/twrp && cd ~/twrp
+          repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
+          repo sync -j$(nproc --all)
+          git clone https://github.com/artem43536456456/twrp-for-realme-note-60x device/realme/RMX3938
+
+      - name: Build
+        run: |
+          cd ~/twrp
+          export ALLOW_MISSING_DEPENDENCIES=true
+          source build/envsetup.sh
+          lunch twrp_RMX3938-eng
+          make recoveryimage -j$(nproc --all)
+
+      - name: Patch Init Boot
+        run: |
+          wget https://github.com/artem43536456456/twrp-for-realme-note-60x/raw/main/magiskboot
+          chmod a+x magiskboot
+          ./magiskboot unpack stock_init_boot.img
+          cp /home/runner/twrp/out/target/product/RMX3938/ramdisk.img ramdisk.cpio
+          ./magiskboot repack stock_init_boot.img patched_init_boot.img
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: TWRP-Final
+          path: patched_init_boot.img
