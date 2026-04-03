@@ -13,19 +13,20 @@ jobs:
       - name: Setup Tools
         run: |
           sudo apt update && sudo apt install -y cpio
-          # Скачиваем magiskboot под x86_64
-          curl -L https://github.com/Magisk-Modules-Repo/Magiskboot_Builder/raw/main/bin/x86_64/magiskboot -o magiskboot
+          # Даем права на запуск твоему magiskboot
           chmod +x magiskboot
 
       - name: Unpack Boot
         run: |
-          # Распаковываем твой 64мб файл
+          # Пробуем распаковать
           ./magiskboot unpack boot.img
-          # Собираем всё в один архив для скачивания
-          tar -cvzf boot_data.tar.gz kernel ramdisk.cpio config dtb 2>/dev/null || tar -cvzf boot_data.tar.gz *
+          # Проверяем, что получилось
+          ls -l
+          # Собираем результат в архив
+          tar -cvzf boot_extracted.tar.gz kernel ramdisk.cpio dtb 2>/dev/null || tar -cvzf boot_extracted.tar.gz *
 
       - name: Upload Result
         uses: actions/upload-artifact@v4
         with:
-          name: extracted-files
-          path: boot_data.tar.gz
+          name: boot-contents
+          path: boot_extracted.tar.gz
