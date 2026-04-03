@@ -1,34 +1,14 @@
-name: Recovery Build
-
-on:
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-
-    - name: Cleanup
+- name: Patch Init Boot with TWRP
       run: |
-        docker rmi $(docker images -q)
-        sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /opt/ghc
-        sudo apt-get clean
+        wget https://github.com/artem43536456456/twrp-for-realme-note-60x/raw/main/magiskboot
+        chmod a+x magiskboot
+        cp stock_init_boot.img init_boot.img
+        ./magiskboot unpack init_boot.img
+        cp /home/runner/twrp/out/target/product/RMX3938/ramdisk.img ramdisk.cpio
+        ./magiskboot repack init_boot.img patched_init_boot.img
 
-    - name: Set up Environment
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y bc build-essential zip curl libc6-dev libncurses5-dev libssl-dev x11proto-core-dev libx11-dev libgl1-mesa-dev g++-multilib mingw-w64-i686-dev libxml2-utils xsltproc gperf
-
-    - name: Install Repo
-      run: |
-        mkdir ~/bin
-        curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
-        chmod a+x ~/bin/repo
-        sudo ln -sf ~/bin/repo /usr/bin/repo
-
-    - name: Sync TWRP Sources
-      run: |
-        mkdir /home/runner/twrp
-        cd /home/runner
+    - name: Upload Result
+      uses: actions/upload-artifact@v4
+      with:
+        name: TWRP-Android15-INIT-BOOT
+        path: patched_init_boot.img
