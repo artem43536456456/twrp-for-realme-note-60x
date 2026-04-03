@@ -10,7 +10,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Recovery
+      - name: Build
         uses: SebaUbuntu/Action-Recovery-Builder@main
         with:
           recipe: 'twrp'
