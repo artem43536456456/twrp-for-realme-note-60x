@@ -48,10 +48,15 @@ jobs:
         lunch twrp_RMX3938-eng
         make recoveryimage -j$(nproc --all)
 
+    - name: Prepare Artifacts
+      run: |
+        cp $(find /home/runner/twrp/out/target/product/ -name "recovery.img") $GITHUB_WORKSPACE/recovery.img
+        cp $(find /home/runner/twrp/out/target/product/ -name "*.zip") $GITHUB_WORKSPACE/ || true
+
     - name: Upload Result
       uses: actions/upload-artifact@v4
       with:
         name: TWRP-Realme-Note-60x
         path: |
-          /home/runner/twrp/out/target/product/*/recovery.img
-          /home/runner/twrp/out/target/product/*/*.zip
+          recovery.img
+          *.zip
