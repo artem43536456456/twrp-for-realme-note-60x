@@ -1,0 +1,21 @@
+name: Recovery Builder
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Recovery Compilation
+        uses: burnt-orange/Action-Recovery-Builder@main
+        with:
+          recipe: 'twrp'
+          repo: 'https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git'
+          branch: 'twrp-12.1'
+          device: 'ussi_arm64'
+          vendor: 'unisoc'
+          path: 'device/unisoc/ussi_arm64'
