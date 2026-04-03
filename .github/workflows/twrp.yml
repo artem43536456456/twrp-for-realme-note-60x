@@ -1,17 +1,5 @@
-name: Recovery Builder
-
-on:
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Recovery Compilation
-        uses: sebaubuntu-remote-builds/Recovery-Builder@main
+- name: Recovery Compilation
+        uses: TeamWinBP/Action-Recovery-Builder@main
         with:
           recipe: 'twrp'
           repo: 'https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git'
