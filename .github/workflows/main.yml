@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest # Теперь самая свежая версия!
     steps:
       - name: Checkout Your Repo
         uses: actions/checkout@v4
@@ -13,25 +13,22 @@ jobs:
       - name: Install Build Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y bc build-essential zip curl libc6-dev libncurses5-dev libssl-dev python3.8
+          sudo apt-get install -y bc build-essential zip curl libc6-dev libncurses5-dev libssl-dev python3 python-is-python3
           mkdir -p ~/bin
           curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
           chmod a+x ~/bin/repo
           echo "$HOME/bin" >> $GITHUB_PATH
 
-      - name: Sync TWRP Sources (AOSP 12.1)
+      - name: Sync TWRP Sources
         run: |
           mkdir twrp && cd twrp
           repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
           repo sync -j$(nproc --all) --force-sync
 
-      - name: Setup Device Tree (IMPORTANT STEP)
+      - name: Setup Device Tree
         run: |
-          # Создаем путь внутри папки twrp
           mkdir -p twrp/device/realme/RMX3938
-          # Копируем твои файлы из корня репозитория в папку сборки
           cp -r device/realme/RMX3938/* twrp/device/realme/RMX3938/
-          # «Пинаем» Ниндзю, чтобы он увидел файлы
           touch twrp/device/realme/RMX3938/BoardConfig.mk
 
       - name: Build Boot Image
@@ -41,25 +38,24 @@ jobs:
           source build/envsetup.sh
           lunch twrp_RMX3938-eng
           
-          # Чистим старое, чтобы точно пересобралось
+          # Чистим перед билдом
           make clean
           
-          # Собираем bootimage (так как нет раздела recovery)
+          # Собираем boot.img для твоего Realme
           make bootimage -j$(nproc --all)
 
-      - name: Check and Upload Artifact
+      - name: Check and Upload
         run: |
-          # Ищем готовый boot.img
           IMAGE=$(find twrp/out/target/product/RMX3938/ -name "boot.img")
           if [ -f "$IMAGE" ]; then
             mkdir output
             cp "$IMAGE" output/twrp_boot_RMX3938.img
           else
-            echo "Файл не найден! Ниндзя опять схалтурил."
+            echo "Файл не найден!"
             exit 1
           fi
 
-      - name: Upload to GitHub
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: TWRP_Boot_Realme_Note60x
