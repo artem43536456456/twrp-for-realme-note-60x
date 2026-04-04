@@ -1,4 +1,4 @@
-name: Recovery Build Final Fix
+name: Recovery Build FINAL 43
 on:
   workflow_dispatch:
 
@@ -9,13 +9,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Preparation
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y bc build-essential zip curl libc6-dev libncurses5-dev libx11-dev libgl1-mesa-dev g++-multilib libxml2-utils xsltproc unzip
-          curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo
-          chmod a+x /usr/local/bin/repo
-
       - name: Build
         run: |
           mkdir twrp && cd twrp
@@ -23,16 +16,20 @@ jobs:
           repo sync -j$(nproc --all) --force-sync
           git clone https://github.com/artem43536456456/twrp-for-realme-note-60x device/realme/RMX3938
           
-          # Запускаем сборку строго внутри папки
           export ALLOW_MISSING_DEPENDENCIES=true
-          bash -c "source build/envsetup.sh && lunch twrp_RMX3938-eng && make recoveryimage -j$(nproc --all)"
+          source build/envsetup.sh
+          lunch twrp_RMX3938-eng
           
-          # Создаем папку для артефактов в корне
-          mkdir -p ../COLLECTION
-          find out/target/product/RMX3938/ -name "*.img" -exec cp {} ../COLLECTION/ \;
+          # Сборка
+          make recoveryimage -j$(nproc --all) || make bootimage -j$(nproc --all)
+          
+          # Вытаскиваем файл
+          mkdir -p ../FINAL_OUTPUT
+          find out/ -name "*.img" -size +15M -exec cp {} ../FINAL_OUTPUT/ \;
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: TWRP_RMX3938_IMAGE
-          path: COLLECTION/
+          name: TWRP_Realme_Note60x
+          path: FINAL_OUTPUT/
+          if-no-files-found: error
