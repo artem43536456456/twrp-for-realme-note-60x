@@ -1,6 +1,7 @@
-name: Recovery Build Final
+name: Recovery Build Final Fix
 on:
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,22 +18,21 @@ jobs:
 
       - name: Build
         run: |
-          # ... (начало как обычно) ...
-          source build/envsetup.sh
-          lunch twrp_RMX3938-eng
+          mkdir twrp && cd twrp
+          repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
+          repo sync -j$(nproc --all) --force-sync
+          git clone https://github.com/artem43536456456/twrp-for-realme-note-60x device/realme/RMX3938
           
-          # ОЧИСТКА, чтобы заставить Ninja работать
-          make clean
+          # Запускаем сборку строго внутри папки
+          export ALLOW_MISSING_DEPENDENCIES=true
+          bash -c "source build/envsetup.sh && lunch twrp_RMX3938-eng && make recoveryimage -j$(nproc --all)"
           
-          # Сборка
-          make recoveryimage -j$(nproc --all)
-          
-          # Поиск вообще любого .img файла на сервере
+          # Создаем папку для артефактов в корне
           mkdir -p ../COLLECTION
-          find out/ -name "*.img" -size +10M -exec cp {} ../COLLECTION/ \;
+          find out/target/product/RMX3938/ -name "*.img" -exec cp {} ../COLLECTION/ \;
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: FINAL_CHANCE_FILES
+          name: TWRP_RMX3938_IMAGE
           path: COLLECTION/
