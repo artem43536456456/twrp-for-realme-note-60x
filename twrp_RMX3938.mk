@@ -6,3 +6,12 @@ PRODUCT_NAME := twrp_RMX3938
 PRODUCT_BRAND := realme
 PRODUCT_MODEL := Realme Note 60x
 PRODUCT_MANUFACTURER := realme
+$(call inherit-product, device/realme/RMX3938/device.mk)
+
+PRODUCT_NAME := twrp_RMX3938
+PRODUCT_DEVICE := RMX3938
+PRODUCT_BRAND := realme
+PRODUCT_MODEL := Realme Note 60x
+PRODUCT_MANUFACTURER := realme
+
+PRODUCT_GMS_CLIENTID_BASE := android-realme
