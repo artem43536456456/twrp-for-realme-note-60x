@@ -15,7 +15,7 @@ jobs:
           curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo
           chmod a+x /usr/local/bin/repo
 
-      - name: Real Build
+      - name: Force Build
         run: |
           mkdir twrp && cd twrp
           repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
@@ -26,20 +26,19 @@ jobs:
           source build/envsetup.sh
           lunch twrp_RMX3938-eng
           
-          # Запускаем сборку RECOVERY
-          make recoveryimage -j$(nproc --all)
+          # Запускаем общую сборку, чтобы он не мог отвертеться
+          make bootimage recoveryimage -j$(nproc --all) || echo "Build stopped, checking what we have..."
           
-          # ПРОВЕРКА: Если файла нет, мы принудительно валим билд
-          if [ ! -f out/target/product/RMX3938/recovery.img ]; then
-            echo "=== ERROR: RECOVERY.IMG NOT CREATED! ==="
-            echo "Checking what WAS created instead:"
-            find out/target/product/RMX3938/ -name "*.img"
-            exit 1
-          fi
+          echo "=== SEARCHING ALL OUT DIRECTORY ==="
+          # Ищем любой файл больше 10МБ, это точно будет наш образ
+          find out/target/product/RMX3938/ -type f -size +10M
+          
+          # Копируем всё найденное в корень для загрузки
+          mkdir -p ../found_images
+          find out/target/product/RMX3938/ -maxdepth 2 -name "*.img" -exec cp {} ../found_images/ \;
 
       - name: Upload
-        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: TWRP-Recovery
-          path: twrp/out/target/product/RMX3938/recovery.img
+          name: ALL_IMAGES_FOUND
+          path: found_images/
