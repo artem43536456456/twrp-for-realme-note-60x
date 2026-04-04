@@ -1,28 +1,42 @@
 DEVICE_PATH := device/realme/RMX3938
 
+# Архитектура
 TARGET_ARCH := arm64
 TARGET_ARCH_VARIANT := armv8-a
 TARGET_CPU_ABI := arm64-v8a
 TARGET_CPU_VARIANT := generic
 
+# Ядро и Загрузчик
+BOARD_BOOT_HEADER_VERSION := 2
 BOARD_KERNEL_PAGESIZE := 4096
-BOARD_BOOT_HEADER_VERSION := 4
-BOARD_KERNEL_CMDLINE := console=ttyS1,115200n8 bootconfig bootconfig
-BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
 
+# Специфичные офсеты для Unisoc T612 (Spreadtrum)
+BOARD_KERNEL_BASE := 0x00000000
+BOARD_KERNEL_OFFSET := 0x00008000
+BOARD_RAMDISK_OFFSET := 0x01000000
+BOARD_TAGS_OFFSET := 0x00000100
+
+# Аргументы командной строки ядра (упростили до минимума)
+BOARD_KERNEL_CMDLINE := console=ttyS1,115200n8 androidboot.hardware=sp9863a
+BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
+BOARD_MKBOOTIMG_ARGS += --kernel_offset $(BOARD_KERNEL_OFFSET)
+BOARD_MKBOOTIMG_ARGS += --ramdisk_offset $(BOARD_RAMDISK_OFFSET)
+BOARD_MKBOOTIMG_ARGS += --tags_offset $(BOARD_TAGS_OFFSET)
+
+# Путь к ядру
 TARGET_PREBUILT_KERNEL := $(DEVICE_PATH)/prebuilt/kernel
 BOARD_KERNEL_IMAGE_NAME := kernel
 
+# Параметры разделов
 BOARD_USES_RECOVERY_AS_BOOT := true
 TARGET_NO_RECOVERY := true
 BOARD_BUILD_SYSTEM_ROOT_IMAGE := true
-
 BOARD_BOOTIMAGE_PARTITION_SIZE := 67108864
-BOARD_FLASH_BLOCK_SIZE := 131072
-BOARD_HAS_LARGE_FILESYSTEM := true
 
+# Исправление rsync
 TARGET_RECOVERY_ROOT_OUT := $(OUT_DIR)/target/product/RMX3938/root
 
+# Настройки TWRP
 TW_THEME := portrait_hdpi
-TW_DEVICE_VERSION := Realme_Note_60x_By_Artem
+TW_DEVICE_VERSION := Realme_Note_60x_By_Artem_v2
 TARGET_SUPPORTS_64_BIT_APPS := true
