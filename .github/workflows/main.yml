@@ -11,34 +11,42 @@ jobs:
       - name: Install Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y bc build-essential zip curl libc6-dev libncurses5-dev x11proto-core-dev libx11-dev libgl1-mesa-dev g++-multilib libxml2-utils xsltproc unzip fontconfig
-          mkdir -p ~/bin
-          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
-          chmod a+x ~/bin/repo
-          sudo ln -sf ~/bin/repo /usr/bin/repo
+          sudo apt-get install -y bc build-essential zip curl libc6-dev libncurses5-dev libx11-dev libgl1-mesa-dev g++-multilib libxml2-utils xsltproc unzip
+          curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo
+          chmod a+x /usr/local/bin/repo
 
-      - name: Sync TWRP
+      - name: Sync and Build
         run: |
-          mkdir ~/twrp && cd ~/twrp
+          mkdir twrp && cd twrp
           repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
           repo sync -j$(nproc --all)
           git clone https://github.com/artem43536456456/twrp-for-realme-note-60x device/realme/RMX3938
-
-      - name: Build
-        run: |
-          cd ~/twrp
           export ALLOW_MISSING_DEPENDENCIES=true
           source build/envsetup.sh
           lunch twrp_RMX3938-eng
           make recoveryimage -j$(nproc --all)
 
-      - name: Patch Image
+      - name: Patch and Upload
         run: |
           wget https://github.com/artem43536456456/twrp-for-realme-note-60x/raw/main/magiskboot
           chmod a+x magiskboot
-          RECOVERY_PATH=$(find /home/runner/twrp/out -name "recovery.img" -o -name "boot.img" | grep -v "obj" | head -n 1)
+          echo "=== SEARCHING FOR IMAGES ==="
+          find . -name "*.img"
+          RECOVERY_PATH=$(find $(pwd) -name "recovery.img" -o -name "boot.img" | grep "target/product" | head -n 1)
+          if [ -z "$RECOVERY_PATH" ]; then
+            echo "ERROR: Image file not found!"
+            exit 1
+          fi
+          echo "Found image at: $RECOVERY_PATH"
           cp "$RECOVERY_PATH" recovery.img
           ./magiskboot unpack recovery.img
           mv ramdisk.cpio ramdisk_new.cpio
           ./magiskboot unpack stock_init_boot.img
           mv ramdisk_new.cpio ramdisk.cpio
+          ./magiskboot repack stock_init_boot.img patched_init_boot.img
+
+      - name: Upload Result
+        uses: actions/upload-artifact@v4
+        with:
+          name: TWRP-Final-Result
+          path: patched_init_boot.img
