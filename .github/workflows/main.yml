@@ -24,39 +24,20 @@ jobs:
           export ALLOW_MISSING_DEPENDENCIES=true
           source build/envsetup.sh
           lunch twrp_RMX3938-eng
-          # Собираем и рекавери, и бут, чтобы хоть что-то вылезло
-          make recoveryimage bootimage -j$(nproc --all) || echo "Build failed, but continuing to check files..."
+          # Чистим перед сборкой и запускаем общий билд
+          make clean
+          make recoveryimage -j$(nproc --all) > build_log.txt 2>&1 || true
 
-      - name: Patch and Upload
+      - name: Diagnostic
         run: |
           cd twrp
-          wget https://github.com/artem43536456456/twrp-for-realme-note-60x/raw/main/magiskboot
-          chmod a+x magiskboot
+          echo "=== LAST 100 LINES OF BUILD LOG ==="
+          tail -n 100 build_log.txt
+          echo "=== SEARCHING ALL DIRECTORIES ==="
+          find . -name "*.img"
           
-          echo "=== WHERE ARE THE FILES? ==="
-          find out/target/product/RMX3938/ -name "*.img"
-          
-          # Ищем любой подходящий образ
-          OUT_IMAGE=$(find out/target/product/RMX3938/ -name "recovery.img" -o -name "boot.img" | head -n 1)
-          
-          if [ -z "$OUT_IMAGE" ]; then
-            echo "STILL NOTHING! Compressing the whole OUT folder for manual check..."
-            tar -czf all_outputs.tar.gz out/target/product/RMX3938/*.img || echo "No images at all."
-            exit 1
-          fi
-          
-          cp "$OUT_IMAGE" recovery.img
-          ./magiskboot unpack recovery.img
-          mv ramdisk.cpio ramdisk_new.cpio
-          cp device/realme/RMX3938/stock_init_boot.img .
-          ./magiskboot unpack stock_init_boot.img
-          mv ramdisk_new.cpio ramdisk.cpio
-          ./magiskboot repack stock_init_boot.img patched_init_boot.img
-
-      - name: Upload
+      - name: Upload Logs
         uses: actions/upload-artifact@v4
         with:
-          name: TWRP-Results
-          path: |
-            twrp/patched_init_boot.img
-            twrp/all_outputs.tar.gz
+          name: Build-Diagnostics
+          path: twrp/build_log.txt
