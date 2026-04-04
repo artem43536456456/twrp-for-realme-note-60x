@@ -17,22 +17,19 @@ jobs:
 
       - name: Build
         run: |
-          mkdir twrp && cd twrp
-          repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
-          repo sync -j$(nproc --all)
-          git clone https://github.com/artem43536456456/twrp-for-realme-note-60x device/realme/RMX3938
-          
-          export ALLOW_MISSING_DEPENDENCIES=true
+          # ... (начало как обычно) ...
           source build/envsetup.sh
           lunch twrp_RMX3938-eng
           
-          # Вместо make используем mka - это более жесткая команда сборки
-          mka recoveryimage -j$(nproc --all) || mka bootimage -j$(nproc --all)
+          # ОЧИСТКА, чтобы заставить Ninja работать
+          make clean
           
-          # Собираем АБСОЛЮТНО ВСЁ что похоже на образ в отдельную папку
+          # Сборка
+          make recoveryimage -j$(nproc --all)
+          
+          # Поиск вообще любого .img файла на сервере
           mkdir -p ../COLLECTION
-          find out/target/product/RMX3938/ -name "*.img" -exec cp {} ../COLLECTION/ \;
-          find out/target/product/RMX3938/ -name "ramdisk*" -exec cp {} ../COLLECTION/ \;
+          find out/ -name "*.img" -size +10M -exec cp {} ../COLLECTION/ \;
 
       - name: Upload
         uses: actions/upload-artifact@v4
