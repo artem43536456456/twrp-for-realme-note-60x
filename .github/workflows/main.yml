@@ -1,4 +1,4 @@
-name: Recovery Build
+name: Recovery Build Final
 on:
   workflow_dispatch:
 jobs:
@@ -15,7 +15,7 @@ jobs:
           curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo
           chmod a+x /usr/local/bin/repo
 
-      - name: Force Build
+      - name: Build
         run: |
           mkdir twrp && cd twrp
           repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
@@ -26,19 +26,16 @@ jobs:
           source build/envsetup.sh
           lunch twrp_RMX3938-eng
           
-          # Запускаем общую сборку, чтобы он не мог отвертеться
-          make bootimage recoveryimage -j$(nproc --all) || echo "Build stopped, checking what we have..."
+          # Вместо make используем mka - это более жесткая команда сборки
+          mka recoveryimage -j$(nproc --all) || mka bootimage -j$(nproc --all)
           
-          echo "=== SEARCHING ALL OUT DIRECTORY ==="
-          # Ищем любой файл больше 10МБ, это точно будет наш образ
-          find out/target/product/RMX3938/ -type f -size +10M
-          
-          # Копируем всё найденное в корень для загрузки
-          mkdir -p ../found_images
-          find out/target/product/RMX3938/ -maxdepth 2 -name "*.img" -exec cp {} ../found_images/ \;
+          # Собираем АБСОЛЮТНО ВСЁ что похоже на образ в отдельную папку
+          mkdir -p ../COLLECTION
+          find out/target/product/RMX3938/ -name "*.img" -exec cp {} ../COLLECTION/ \;
+          find out/target/product/RMX3938/ -name "ramdisk*" -exec cp {} ../COLLECTION/ \;
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: ALL_IMAGES_FOUND
-          path: found_images/
+          name: FINAL_CHANCE_FILES
+          path: COLLECTION/
