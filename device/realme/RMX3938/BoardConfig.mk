@@ -35,4 +35,4 @@ TW_DEVICE_VERSION := Realme_Note_60x_By_Artem_v69
 TARGET_SUPPORTS_64_BIT_APPS := true
 BOARD_INCLUDE_DTB_IN_BOOTIMG := true
 
-BOARD_MKBOOTIMG_ARGS += --dtb_offset 0x00000000
+BOARD_MKBOOTIMG_ARGS += --dtb $(shell pwd)/prebuilt/dtb.img --dtb_offset 0x00000000
