@@ -1,4 +1,4 @@
-name: TWRP Recovery Build - Attempt 58
+name: TWRP Recovery Build
 
 on:
   workflow_dispatch:
