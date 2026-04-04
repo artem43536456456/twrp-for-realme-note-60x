@@ -1,4 +1,4 @@
-name: Recovery Build FINAL 52
+name: Recovery Build FINAL 53
 on:
   workflow_dispatch:
 
@@ -24,25 +24,28 @@ jobs:
 
       - name: Build
         run: |
-          mkdir twrp_final && cd twrp_final
+          mkdir twrp && cd twrp
           repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
           repo sync -j$(nproc --all) --force-sync
           
-          # КЛОНИРУЕМ С НОВЫМ ИМЕНЕМ ПУТИ, ЧТОБЫ ОБМАНУТЬ КЭШ
-          git clone https://github.com/artem43536456456/twrp-for-realme-note-60x device/realme/RMX3938_NEW
+          # Клонируем в правильную папку (БЕЗ _NEW)
+          git clone https://github.com/artem43536456456/twrp-for-realme-note-60x device/realme/RMX3938
           
           export ALLOW_MISSING_DEPENDENCIES=true
           source build/envsetup.sh
           
-          # Пытаемся запустить через новое имя
-          lunch twrp_RMX3938-eng || lunch twrp_RMX3938_NEW-eng
+          # Выбираем правильный конфиг
+          lunch twrp_RMX3938-eng
           
-          # ПРИНУДИТЕЛЬНЫЙ СТАРТ
+          # ПРИНУДИТЕЛЬНАЯ ОЧИСТКА И ОБНОВЛЕНИЕ ВРЕМЕНИ
           make clean
-          make recoveryimage -j$(nproc --all)
+          find device/realme/RMX3938/ -type f -exec touch {} +
+          
+          # Поехали!
+          make recoveryimage -j$(nproc --all) || make bootimage -j$(nproc --all)
           
           mkdir -p ../FINAL_OUTPUT
-          find out/ -name "*.img" -size +15M -exec cp {} ../FINAL_OUTPUT/ \;
+          find out/target/product/RMX3938/ -name "*.img" -size +15M -exec cp {} ../FINAL_OUTPUT/ \;
 
       - name: Upload
         uses: actions/upload-artifact@v4
