@@ -1,26 +1,50 @@
-- name: Patch Image
+name: Recovery Build
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc build-essential zip curl libc6-dev libncurses5-dev libx11-dev libgl1-mesa-dev g++-multilib libxml2-utils xsltproc unzip
+          curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo
+          chmod a+x /usr/local/bin/repo
+
+      - name: Sync and Build
+        run: |
+          mkdir twrp && cd twrp
+          repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
+          repo sync -j$(nproc --all)
+          git clone https://github.com/artem43536456456/twrp-for-realme-note-60x device/realme/RMX3938
+          export ALLOW_MISSING_DEPENDENCIES=true
+          source build/envsetup.sh
+          lunch twrp_RMX3938-eng
+          # Собираем и рекавери, и бут, чтобы хоть что-то вылезло
+          make recoveryimage bootimage -j$(nproc --all) || echo "Build failed, but continuing to check files..."
+
+      - name: Patch and Upload
         run: |
           cd twrp
           wget https://github.com/artem43536456456/twrp-for-realme-note-60x/raw/main/magiskboot
           chmod a+x magiskboot
           
-          echo "=== CHECKING BUILD LOGS ==="
-          # Если файла нет, покажем последние строки сборки
-          ls -R out/target/product/RMX3938/ || echo "Out directory is missing!"
+          echo "=== WHERE ARE THE FILES? ==="
+          find out/target/product/RMX3938/ -name "*.img"
           
-          echo "=== SEARCHING FOR ANY BIG IMAGES ==="
-          find . -name "*.img" -size +10M
-          
-          # Пробуем найти файл еще раз, максимально широко
-          OUT_IMAGE=$(find $(pwd)/out -name "*.img" | grep -v "obj" | head -n 1)
+          # Ищем любой подходящий образ
+          OUT_IMAGE=$(find out/target/product/RMX3938/ -name "recovery.img" -o -name "boot.img" | head -n 1)
           
           if [ -z "$OUT_IMAGE" ]; then
-            echo "ERROR: STILL NO IMAGE! Showing last 50 lines of build process:"
-            tail -n 50 /home/runner/work/_temp/*.log || echo "No logs found."
+            echo "STILL NOTHING! Compressing the whole OUT folder for manual check..."
+            tar -czf all_outputs.tar.gz out/target/product/RMX3938/*.img || echo "No images at all."
             exit 1
           fi
           
-          echo "Found: $OUT_IMAGE"
           cp "$OUT_IMAGE" recovery.img
           ./magiskboot unpack recovery.img
           mv ramdisk.cpio ramdisk_new.cpio
@@ -32,5 +56,7 @@
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: TWRP-Final
-          path: twrp/patched_init_boot.img
+          name: TWRP-Results
+          path: |
+            twrp/patched_init_boot.img
+            twrp/all_outputs.tar.gz
