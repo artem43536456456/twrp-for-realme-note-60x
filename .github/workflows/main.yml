@@ -24,34 +24,36 @@ jobs:
 
       - name: Build
         run: |
-          mkdir twrp_final && cd twrp_final
+          mkdir twrp_new && cd twrp_new
           repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
           repo sync -j$(nproc --all) --force-sync
           
           git clone https://github.com/artem43536456456/twrp-for-realme-note-60x device/realme/RMX3938
           
+          # ГЛАВНЫЙ ХАК: меняем дату файлов, чтобы Ниндзя проснулся
+          touch device/realme/RMX3938/BoardConfig.mk
+          touch device/realme/RMX3938/device.mk
+          
           export ALLOW_MISSING_DEPENDENCIES=true
           source build/envsetup.sh
-          
-          # Вместо обычного lunch делаем жесткую привязку
           lunch twrp_RMX3938-eng
           
-          # УДАЛЯЕМ ПРАВИЛА НИНДЗИ, чтобы он забыл всё старое
+          # Очистка старых логов Ниндзи
+          make clean
           rm -rf out/.ninja_log out/.ninja_deps
           
-          # ПРИНУДИТЕЛЬНО ПЕРЕСОБИРАЕМ ВСЁ
-          # Добавляем ONE_SHOT_MAKEFILE для точечного удара
-          make -j$(nproc --all) recoveryimage
+          # СОБИРАЕМ ИМЕННО BOOTIMAGE
+          make bootimage -j$(nproc --all)
           
-          # ПРОВЕРКА
-          if [ ! -f out/target/product/RMX3938/recovery.img ]; then
-            echo "ФАЙЛА НЕТ! Ищем, что он вообще собрал:"
+          # Ищем результат
+          if [ ! -f out/target/product/RMX3938/boot.img ]; then
+            echo "ФАЙЛА НЕТ! Ниндзя опять всех обманул."
             find out/target/product/RMX3938/ -name "*.img"
             exit 1
           fi
           
           mkdir -p ../FINAL_OUTPUT
-          cp out/target/product/RMX3938/recovery.img ../FINAL_OUTPUT/
+          cp out/target/product/RMX3938/boot.img ../FINAL_OUTPUT/twrp_boot_RMX3938.img
           
       - name: Upload
         uses: actions/upload-artifact@v4
