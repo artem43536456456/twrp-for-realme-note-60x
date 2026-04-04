@@ -24,29 +24,31 @@ jobs:
           export ALLOW_MISSING_DEPENDENCIES=true
           source build/envsetup.sh
           lunch twrp_RMX3938-eng
-          make recoveryimage -j$(nproc --all)
+          make bootimage -j$(nproc --all)
 
-      - name: Patch and Upload
+      - name: Patch Image
         run: |
+          cd twrp
           wget https://github.com/artem43536456456/twrp-for-realme-note-60x/raw/main/magiskboot
           chmod a+x magiskboot
-          echo "=== SEARCHING FOR IMAGES ==="
-          find . -name "*.img"
-          RECOVERY_PATH=$(find $(pwd) -name "recovery.img" -o -name "boot.img" | grep "target/product" | head -n 1)
-          if [ -z "$RECOVERY_PATH" ]; then
-            echo "ERROR: Image file not found!"
+          # Ищем любой свежий образ в папке out
+          OUT_IMAGE=$(find out/target/product/RMX3938/ -name "*.img" | grep -E "recovery|boot" | head -n 1)
+          if [ -z "$OUT_IMAGE" ]; then
+            echo "ERROR: No image found in out/ directory!"
+            find out/target/product/RMX3938/ -name "*.img"
             exit 1
           fi
-          echo "Found image at: $RECOVERY_PATH"
-          cp "$RECOVERY_PATH" recovery.img
+          cp "$OUT_IMAGE" recovery.img
           ./magiskboot unpack recovery.img
           mv ramdisk.cpio ramdisk_new.cpio
+          # Используем родной init_boot из твоего репозитория
+          cp device/realme/RMX3938/stock_init_boot.img .
           ./magiskboot unpack stock_init_boot.img
           mv ramdisk_new.cpio ramdisk.cpio
           ./magiskboot repack stock_init_boot.img patched_init_boot.img
 
-      - name: Upload Result
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: TWRP-Final-Result
-          path: patched_init_boot.img
+          name: TWRP-Final
+          path: twrp/patched_init_boot.img
