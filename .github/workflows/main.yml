@@ -8,38 +8,35 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Tools
+      - name: Full Build and Extraction
         run: |
           sudo apt-get update
           sudo apt-get install -y bc build-essential zip curl libc6-dev libncurses5-dev libx11-dev libgl1-mesa-dev g++-multilib libxml2-utils xsltproc unzip
           curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo
           chmod a+x /usr/local/bin/repo
 
-      - name: Sync and Build
-        run: |
           mkdir twrp && cd twrp
           repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
           repo sync -j$(nproc --all)
           git clone https://github.com/artem43536456456/twrp-for-realme-note-60x device/realme/RMX3938
+          
           export ALLOW_MISSING_DEPENDENCIES=true
           source build/envsetup.sh
           lunch twrp_RMX3938-eng
-          # Собираем всё подряд
+          
+          # Запускаем сборку и ЗАПРЕЩАЕМ удалять файлы
           make bootimage -j$(nproc --all)
           
-          # Вместо поиска конкретного файла, копируем ВООБЩЕ ВСЕ образы из out в папку выше
-          mkdir -p ../output_files
-          find out/target/product/RMX3938/ -maxdepth 1 -name "*.img" -exec cp {} ../output_files/ \;
-          # На всякий случай заглянем глубже
-          find out/target/product/RMX3938/ -name "ramdisk*" -exec cp {} ../output_files/ \;
-
-      - name: Final Step
-        run: |
-          echo "=== LIST OF ALL GENERATED FILES ==="
-          ls -lh output_files/
+          echo "=== SEARCHING EVERYWHERE ==="
+          mkdir -p ../FINAL_HOLDING_PEN
+          # Ищем вообще любой .img файл в папке twrp и копируем его в безопасное место
+          find . -name "*.img" -exec cp {} ../FINAL_HOLDING_PEN/ \;
           
-      - name: Upload Everything
+          echo "=== WHAT WE FOUND ==="
+          ls -R ../FINAL_HOLDING_PEN/
+
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: TWRP-Debug-Files
-          path: output_files/
+          name: REAL_FILES_FOUND
+          path: FINAL_HOLDING_PEN/
