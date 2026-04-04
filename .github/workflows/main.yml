@@ -8,13 +8,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Full Build and Extraction
+      - name: Preparation
         run: |
           sudo apt-get update
           sudo apt-get install -y bc build-essential zip curl libc6-dev libncurses5-dev libx11-dev libgl1-mesa-dev g++-multilib libxml2-utils xsltproc unzip
           curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo
           chmod a+x /usr/local/bin/repo
 
+      - name: Real Build
+        run: |
           mkdir twrp && cd twrp
           repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
           repo sync -j$(nproc --all)
@@ -24,19 +26,20 @@ jobs:
           source build/envsetup.sh
           lunch twrp_RMX3938-eng
           
-          # Запускаем сборку и ЗАПРЕЩАЕМ удалять файлы
-          make bootimage -j$(nproc --all)
+          # Запускаем сборку RECOVERY
+          make recoveryimage -j$(nproc --all)
           
-          echo "=== SEARCHING EVERYWHERE ==="
-          mkdir -p ../FINAL_HOLDING_PEN
-          # Ищем вообще любой .img файл в папке twrp и копируем его в безопасное место
-          find . -name "*.img" -exec cp {} ../FINAL_HOLDING_PEN/ \;
-          
-          echo "=== WHAT WE FOUND ==="
-          ls -R ../FINAL_HOLDING_PEN/
+          # ПРОВЕРКА: Если файла нет, мы принудительно валим билд
+          if [ ! -f out/target/product/RMX3938/recovery.img ]; then
+            echo "=== ERROR: RECOVERY.IMG NOT CREATED! ==="
+            echo "Checking what WAS created instead:"
+            find out/target/product/RMX3938/ -name "*.img"
+            exit 1
+          fi
 
-      - name: Upload Artifacts
+      - name: Upload
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: REAL_FILES_FOUND
-          path: FINAL_HOLDING_PEN/
+          name: TWRP-Recovery
+          path: twrp/out/target/product/RMX3938/recovery.img
