@@ -1,63 +1,66 @@
-name: Recovery Build REAL 54
+name: TWRP Recovery Build - Attempt 58
+
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
-      - name: Checkout
+      - name: Checkout Your Repo
         uses: actions/checkout@v4
 
-      - name: Maximize Space
+      - name: Install Build Tools
         run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-
-      - name: Install Repo
-        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc build-essential zip curl libc6-dev libncurses5-dev libssl-dev python3.8
           mkdir -p ~/bin
           curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
           chmod a+x ~/bin/repo
           echo "$HOME/bin" >> $GITHUB_PATH
 
-      - name: Build
+      - name: Sync TWRP Sources (AOSP 12.1)
         run: |
-          mkdir twrp_new && cd twrp_new
+          mkdir twrp && cd twrp
           repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
           repo sync -j$(nproc --all) --force-sync
-          
-          git clone https://github.com/artem43536456456/twrp-for-realme-note-60x device/realme/RMX3938
-          
-          # ГЛАВНЫЙ ХАК: меняем дату файлов, чтобы Ниндзя проснулся
-          touch device/realme/RMX3938/BoardConfig.mk
-          touch device/realme/RMX3938/device.mk
-          
+
+      - name: Setup Device Tree (IMPORTANT STEP)
+        run: |
+          # Создаем путь внутри папки twrp
+          mkdir -p twrp/device/realme/RMX3938
+          # Копируем твои файлы из корня репозитория в папку сборки
+          cp -r device/realme/RMX3938/* twrp/device/realme/RMX3938/
+          # «Пинаем» Ниндзю, чтобы он увидел файлы
+          touch twrp/device/realme/RMX3938/BoardConfig.mk
+
+      - name: Build Boot Image
+        run: |
+          cd twrp
           export ALLOW_MISSING_DEPENDENCIES=true
           source build/envsetup.sh
           lunch twrp_RMX3938-eng
           
-          # Очистка старых логов Ниндзи
+          # Чистим старое, чтобы точно пересобралось
           make clean
-          rm -rf out/.ninja_log out/.ninja_deps
           
-          # СОБИРАЕМ ИМЕННО BOOTIMAGE
+          # Собираем bootimage (так как нет раздела recovery)
           make bootimage -j$(nproc --all)
-          
-          # Ищем результат
-          if [ ! -f out/target/product/RMX3938/boot.img ]; then
-            echo "ФАЙЛА НЕТ! Ниндзя опять всех обманул."
-            find out/target/product/RMX3938/ -name "*.img"
+
+      - name: Check and Upload Artifact
+        run: |
+          # Ищем готовый boot.img
+          IMAGE=$(find twrp/out/target/product/RMX3938/ -name "boot.img")
+          if [ -f "$IMAGE" ]; then
+            mkdir output
+            cp "$IMAGE" output/twrp_boot_RMX3938.img
+          else
+            echo "Файл не найден! Ниндзя опять схалтурил."
             exit 1
           fi
-          
-          mkdir -p ../FINAL_OUTPUT
-          cp out/target/product/RMX3938/boot.img ../FINAL_OUTPUT/twrp_boot_RMX3938.img
-          
-      - name: Upload
+
+      - name: Upload to GitHub
         uses: actions/upload-artifact@v4
         with:
-          name: TWRP_Realme_Note60x
-          path: FINAL_OUTPUT/
-          if-no-files-found: error
+          name: TWRP_Boot_Realme_Note60x
+          path: output/*.img
