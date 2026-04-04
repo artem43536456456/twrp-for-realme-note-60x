@@ -1,4 +1,4 @@
-name: Recovery Build FINAL 44
+name: Recovery Build FINAL 47
 on:
   workflow_dispatch:
 
@@ -23,14 +23,19 @@ jobs:
           repo sync -j$(nproc --all) --force-sync
           git clone https://github.com/artem43536456456/twrp-for-realme-note-60x device/realme/RMX3938
           
+          # ЖЕСТКАЯ ОЧИСТКА
+          rm -rf out
+          
           export ALLOW_MISSING_DEPENDENCIES=true
           source build/envsetup.sh
           lunch twrp_RMX3938-eng
           
+          # Сборка с нуля
           make recoveryimage -j$(nproc --all) || make bootimage -j$(nproc --all)
           
+          # Тотальный поиск образа
           mkdir -p ../FINAL_OUTPUT
-          find out/ -name "*.img" -size +15M -exec cp {} ../FINAL_OUTPUT/ \;
+          find out/target/product/RMX3938/ -name "*.img" -size +15M -exec cp {} ../FINAL_OUTPUT/ \;
 
       - name: Upload
         uses: actions/upload-artifact@v4
