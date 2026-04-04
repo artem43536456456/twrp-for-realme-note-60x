@@ -1,4 +1,4 @@
-name: Recovery Build FINAL 47
+name: Recovery Build FINAL 50
 on:
   workflow_dispatch:
 
@@ -8,6 +8,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Maximize Build Space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
 
       - name: Install Repo
         run: |
@@ -23,17 +29,20 @@ jobs:
           repo sync -j$(nproc --all) --force-sync
           git clone https://github.com/artem43536456456/twrp-for-realme-note-60x device/realme/RMX3938
           
-          # ЖЕСТКАЯ ОЧИСТКА
-          rm -rf out
+          # ХАК ДЛЯ НИНДЗИ: делаем вид, что файлы созданы только что
+          find device/realme/RMX3938/ -type f -exec touch {} +
           
           export ALLOW_MISSING_DEPENDENCIES=true
           source build/envsetup.sh
           lunch twrp_RMX3938-eng
           
-          # Сборка с нуля
+          # Принудительная глубокая очистка перед стартом
+          make clean
+          
+          # Собираем recovery и принудительно boot, если первое не пойдет
           make recoveryimage -j$(nproc --all) || make bootimage -j$(nproc --all)
           
-          # Тотальный поиск образа
+          # Сбор артефактов
           mkdir -p ../FINAL_OUTPUT
           find out/target/product/RMX3938/ -name "*.img" -size +15M -exec cp {} ../FINAL_OUTPUT/ \;
 
