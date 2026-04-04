@@ -46,7 +46,7 @@ jobs:
           make recoveryimage -j$(nproc --all)
           
           if [ ! -f out/target/product/RMX3938/recovery.img ]; then
-            echo "ОШИБКА: recovery.img НЕ СОЗДАН! Ниндзя опять схалтурил."
+            echo "Recovery.img НЕ СОЗДАН! Ниндзя опять схалтурил."
             exit 1
           fi
           
