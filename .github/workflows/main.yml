@@ -28,22 +28,30 @@ jobs:
           repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
           repo sync -j$(nproc --all) --force-sync
           
-          # Клонируем СТРОГО в нужную папку
           git clone https://github.com/artem43536456456/twrp-for-realme-note-60x device/realme/RMX3938
           
+          # УБИРАЕМ КЭШ ПОЛНОСТЬЮ
           export ALLOW_MISSING_DEPENDENCIES=true
           source build/envsetup.sh
           lunch twrp_RMX3938-eng
           
-          # ПРИНУДИТЕЛЬНАЯ ПЕРЕСБОРКА
-          make clean
+          # ЖЕСТКАЯ ЗАЧИСТКА
+          make clobber 
+          
+          # ЗАСТАВЛЯЕМ СИСТЕМУ ДУМАТЬ, ЧТО ФАЙЛЫ ИЗМЕНИЛИСЬ СЕКУНДУ НАЗАД
+          find device/realme/RMX3938/ -type f -exec touch {} +
+          find build/make/ -type f -exec touch {} +
+          
+          # ЗАПУСК СБОРКИ С ПРИНУДИТЕЛЬНЫМ ОБНОВЛЕНИЕМ
           make recoveryimage -j$(nproc --all)
           
-          # ПРОВЕРКА: Если файл не создался, принудительно валим билд с ошибкой
           if [ ! -f out/target/product/RMX3938/recovery.img ]; then
-            echo "ОШИБКА: recovery.img НЕ СОЗДАН! Билд наврал про успех."
+            echo "ОШИБКА: recovery.img НЕ СОЗДАН! Ниндзя опять схалтурил."
             exit 1
           fi
+          
+          mkdir -p ../FINAL_OUTPUT
+          cp out/target/product/RMX3938/recovery.img ../FINAL_OUTPUT/
           
           mkdir -p ../FINAL_OUTPUT
           cp out/target/product/RMX3938/recovery.img ../FINAL_OUTPUT/
