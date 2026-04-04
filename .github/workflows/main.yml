@@ -1,4 +1,4 @@
-name: Recovery Build FINAL 43
+name: Recovery Build FINAL 44
 on:
   workflow_dispatch:
 
@@ -8,6 +8,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install Repo
+        run: |
+          mkdir -p ~/bin
+          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+          chmod a+x ~/bin/repo
+          echo "$HOME/bin" >> $GITHUB_PATH
 
       - name: Build
         run: |
@@ -20,10 +27,8 @@ jobs:
           source build/envsetup.sh
           lunch twrp_RMX3938-eng
           
-          # Сборка
           make recoveryimage -j$(nproc --all) || make bootimage -j$(nproc --all)
           
-          # Вытаскиваем файл
           mkdir -p ../FINAL_OUTPUT
           find out/ -name "*.img" -size +15M -exec cp {} ../FINAL_OUTPUT/ \;
 
