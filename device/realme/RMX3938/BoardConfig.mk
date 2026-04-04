@@ -32,3 +32,6 @@ TARGET_RECOVERY_ROOT_OUT := $(OUT_DIR)/target/product/RMX3938/root
 TW_THEME := portrait_hdpi
 TW_DEVICE_VERSION := Realme_Note_60x_By_Artem_v69
 TARGET_SUPPORTS_64_BIT_APPS := true
+BOARD_INCLUDE_DTB_IN_BOOTIMG := true
+
+BOARD_MKBOOTIMG_ARGS += --dtb_offset 0x00000000
